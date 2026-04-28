@@ -1,4 +1,4 @@
-const API_URL = process.env.WORDPRESS_API_URL || 'http://localhost:8080/wp-json';
+const API_URL = process.env.WORDPRESS_API_URL || 'https://compu81.wordpress.com/wp-json';
 
 // Generic fetch with error handling
 async function fetchAPI<T>(endpoint: string, fallback: T): Promise<T> {
