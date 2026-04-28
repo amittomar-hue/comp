@@ -1,0 +1,217 @@
+<?php
+/**
+ * Custom Post Types for Compunnel
+ *
+ * Registers: services, case_study, press_release, award, client_logo,
+ *            hero_slide, industry, partner.
+ *
+ * File: inc/custom-post-types.php
+ */
+
+if ( ! defined( 'ABSPATH' ) ) exit;
+
+/**
+ * Register all Compunnel custom post types.
+ */
+function compunnel_register_post_types(): void {
+
+    /* ─── Services ─────────────────────────────────────────────────────── */
+    register_post_type( 'compunnel_service', [
+        'labels'              => compunnel_labels( 'Service', 'Services' ),
+        'public'              => false,
+        'show_ui'             => true,
+        'show_in_menu'        => true,
+        'show_in_rest'        => true,
+        'rest_base'           => 'services',
+        'rest_controller_class' => 'WP_REST_Posts_Controller',
+        'supports'            => [ 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields' ],
+        'has_archive'         => false,
+        'rewrite'             => false,
+        'menu_icon'           => 'dashicons-admin-tools',
+        'menu_position'       => 5,
+    ] );
+
+    /* ─── Case Studies ──────────────────────────────────────────────────── */
+    register_post_type( 'case_study', [
+        'labels'              => compunnel_labels( 'Case Study', 'Case Studies' ),
+        'public'              => false,
+        'show_ui'             => true,
+        'show_in_menu'        => true,
+        'show_in_rest'        => true,
+        'rest_base'           => 'case_study',
+        'supports'            => [ 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields' ],
+        'has_archive'         => false,
+        'rewrite'             => [ 'slug' => 'case-study' ],
+        'menu_icon'           => 'dashicons-portfolio',
+        'menu_position'       => 6,
+    ] );
+
+    /* ─── Press Releases ────────────────────────────────────────────────── */
+    register_post_type( 'press_release', [
+        'labels'              => compunnel_labels( 'Press Release', 'Press Releases' ),
+        'public'              => false,
+        'show_ui'             => true,
+        'show_in_menu'        => true,
+        'show_in_rest'        => true,
+        'rest_base'           => 'press_release',
+        'supports'            => [ 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields' ],
+        'has_archive'         => false,
+        'rewrite'             => [ 'slug' => 'press-release' ],
+        'menu_icon'           => 'dashicons-megaphone',
+        'menu_position'       => 7,
+    ] );
+
+    /* ─── Awards ────────────────────────────────────────────────────────── */
+    register_post_type( 'award', [
+        'labels'              => compunnel_labels( 'Award', 'Awards' ),
+        'public'              => false,
+        'show_ui'             => true,
+        'show_in_menu'        => true,
+        'show_in_rest'        => true,
+        'rest_base'           => 'award',
+        'supports'            => [ 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields' ],
+        'has_archive'         => false,
+        'rewrite'             => false,
+        'menu_icon'           => 'dashicons-awards',
+        'menu_position'       => 8,
+    ] );
+
+    /* ─── Client Logos ──────────────────────────────────────────────────── */
+    register_post_type( 'client_logo', [
+        'labels'              => compunnel_labels( 'Client Logo', 'Client Logos' ),
+        'public'              => false,
+        'show_ui'             => true,
+        'show_in_menu'        => true,
+        'show_in_rest'        => true,
+        'rest_base'           => 'client_logo',
+        'supports'            => [ 'title', 'thumbnail', 'custom-fields' ],
+        'has_archive'         => false,
+        'rewrite'             => false,
+        'menu_icon'           => 'dashicons-images-alt2',
+        'menu_position'       => 9,
+    ] );
+
+    /* ─── Hero Slides ───────────────────────────────────────────────────── */
+    register_post_type( 'hero_slide', [
+        'labels'              => compunnel_labels( 'Hero Slide', 'Hero Slides' ),
+        'public'              => false,
+        'show_ui'             => true,
+        'show_in_menu'        => true,
+        'show_in_rest'        => true,
+        'rest_base'           => 'hero_slide',
+        'supports'            => [ 'title', 'thumbnail', 'page-attributes', 'custom-fields' ],
+        'has_archive'         => false,
+        'rewrite'             => false,
+        'menu_icon'           => 'dashicons-slides',
+        'menu_position'       => 4,
+    ] );
+
+    /* ─── Industries ────────────────────────────────────────────────────── */
+    register_post_type( 'industry', [
+        'labels'              => compunnel_labels( 'Industry', 'Industries' ),
+        'public'              => false,
+        'show_ui'             => true,
+        'show_in_menu'        => true,
+        'show_in_rest'        => true,
+        'rest_base'           => 'industry',
+        'supports'            => [ 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields' ],
+        'has_archive'         => false,
+        'rewrite'             => [ 'slug' => 'industry' ],
+        'menu_icon'           => 'dashicons-building',
+        'menu_position'       => 10,
+    ] );
+
+    /* ─── Partners ──────────────────────────────────────────────────────── */
+    register_post_type( 'partner', [
+        'labels'              => compunnel_labels( 'Partner', 'Partners' ),
+        'public'              => false,
+        'show_ui'             => true,
+        'show_in_menu'        => true,
+        'show_in_rest'        => true,
+        'rest_base'           => 'partner',
+        'supports'            => [ 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields' ],
+        'has_archive'         => false,
+        'rewrite'             => false,
+        'menu_icon'           => 'dashicons-groups',
+        'menu_position'       => 11,
+    ] );
+}
+add_action( 'init', 'compunnel_register_post_types' );
+
+/**
+ * Helper: generate WP labels array.
+ */
+function compunnel_labels( string $singular, string $plural ): array {
+    return [
+        'name'               => $plural,
+        'singular_name'      => $singular,
+        'add_new'            => "Add New {$singular}",
+        'add_new_item'       => "Add New {$singular}",
+        'edit_item'          => "Edit {$singular}",
+        'new_item'           => "New {$singular}",
+        'view_item'          => "View {$singular}",
+        'search_items'       => "Search {$plural}",
+        'not_found'          => "No {$plural} found",
+        'not_found_in_trash' => "No {$plural} found in Trash",
+        'menu_name'          => $plural,
+    ];
+}
+
+/**
+ * Register custom taxonomies.
+ */
+function compunnel_register_taxonomies(): void {
+
+    // Service Category
+    register_taxonomy( 'service_category', [ 'compunnel_service' ], [
+        'labels'            => compunnel_labels( 'Service Category', 'Service Categories' ),
+        'public'            => false,
+        'show_ui'           => true,
+        'show_in_rest'      => true,
+        'hierarchical'      => true,
+        'rewrite'           => false,
+    ] );
+
+    // Insight Type (blog, whitepaper, ebook, webinar, etc.)
+    register_taxonomy( 'insight_type', [ 'post' ], [
+        'labels'            => compunnel_labels( 'Insight Type', 'Insight Types' ),
+        'public'            => false,
+        'show_ui'           => true,
+        'show_in_rest'      => true,
+        'hierarchical'      => false,
+        'rewrite'           => false,
+    ] );
+}
+add_action( 'init', 'compunnel_register_taxonomies' );
+
+/**
+ * Expose featured image URL in REST API responses.
+ */
+function compunnel_add_featured_image_url(): void {
+    $post_types = [
+        'post', 'page', 'compunnel_service', 'case_study',
+        'press_release', 'award', 'client_logo', 'hero_slide',
+        'industry', 'partner',
+    ];
+
+    foreach ( $post_types as $post_type ) {
+        register_rest_field(
+            $post_type,
+            'featured_image_url',
+            [
+                'get_callback' => function( array $post_arr ): ?string {
+                    $id = (int) $post_arr['featured_media'];
+                    if ( ! $id ) return null;
+                    $src = wp_get_attachment_image_url( $id, 'full' );
+                    return $src ?: null;
+                },
+                'schema' => [
+                    'type'        => 'string',
+                    'description' => 'Full URL of the featured image.',
+                    'context'     => [ 'view', 'embed' ],
+                ],
+            ]
+        );
+    }
+}
+add_action( 'rest_api_init', 'compunnel_add_featured_image_url' );

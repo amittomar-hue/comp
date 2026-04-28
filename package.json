@@ -1,0 +1,244 @@
+<?php
+/**
+ * Compunnel Theme — functions.php
+ *
+ * This is a fully headless WordPress theme.
+ * All content is delivered to a Next.js frontend via the WP REST API.
+ * No plugins are required.
+ *
+ * @package Compunnel
+ * @version 1.0.0
+ */
+
+if ( ! defined( 'ABSPATH' ) ) exit;
+
+/* ═════════════════════════════════════════════════════════════════════════
+   THEME SETUP
+   ═════════════════════════════════════════════════════════════════════════ */
+
+function compunnel_setup(): void {
+    // Translations
+    load_theme_textdomain( 'compunnel', get_template_directory() . '/languages' );
+
+    // Post thumbnails (used as hero images, logos, etc.)
+    add_theme_support( 'post-thumbnails' );
+    add_image_size( 'compunnel-hero',     1920, 800,  true );
+    add_image_size( 'compunnel-card',     600,  400,  true );
+    add_image_size( 'compunnel-thumb',    400,  300,  true );
+    add_image_size( 'compunnel-logo',     400,  200,  false );
+
+    // Title tag
+    add_theme_support( 'title-tag' );
+
+    // Nav menus
+    register_nav_menus( [
+        'primary'          => __( 'Primary Navigation',     'compunnel' ),
+        'footer-about'     => __( 'Footer — About',         'compunnel' ),
+        'footer-services'  => __( 'Footer — Services',      'compunnel' ),
+        'footer-insights'  => __( 'Footer — Insights',      'compunnel' ),
+    ] );
+
+    // HTML5 support
+    add_theme_support( 'html5', [
+        'search-form', 'comment-form', 'comment-list', 'gallery', 'caption', 'script', 'style',
+    ] );
+
+    // Editor colour palette (matches brand)
+    add_theme_support( 'editor-color-palette', [
+        [ 'name' => 'Brand Blue',  'slug' => 'brand-blue',  'color' => '#0057FF' ],
+        [ 'name' => 'Brand Navy',  'slug' => 'brand-navy',  'color' => '#020B2D' ],
+        [ 'name' => 'Brand Cyan',  'slug' => 'brand-cyan',  'color' => '#00D4FF' ],
+        [ 'name' => 'White',       'slug' => 'white',        'color' => '#FFFFFF' ],
+        [ 'name' => 'Light Gray',  'slug' => 'light-gray',  'color' => '#F8FAFF' ],
+    ] );
+
+    // Block editor
+    add_theme_support( 'align-wide' );
+    add_theme_support( 'responsive-embeds' );
+    add_theme_support( 'wp-block-styles' );
+}
+add_action( 'after_setup_theme', 'compunnel_setup' );
+
+/* ═════════════════════════════════════════════════════════════════════════
+   LOAD INCLUDES
+   ═════════════════════════════════════════════════════════════════════════ */
+
+$includes = [
+    'inc/cors.php',
+    'inc/custom-post-types.php',
+    'inc/api-endpoints.php',
+    'inc/admin-settings.php',
+];
+
+foreach ( $includes as $file ) {
+    $path = get_template_directory() . "/{$file}";
+    if ( file_exists( $path ) ) {
+        require_once $path;
+    }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   REST API ENHANCEMENTS
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Expose full-size thumbnail URL in default post REST responses.
+ */
+function compunnel_expose_thumbnail_url(): void {
+    $types = [ 'post', 'page' ];
+    foreach ( $types as $type ) {
+        add_filter( "rest_prepare_{$type}", function( WP_REST_Response $response, WP_Post $post ) {
+            $thumb_id = get_post_thumbnail_id( $post->ID );
+            if ( $thumb_id ) {
+                $url = wp_get_attachment_image_url( $thumb_id, 'full' );
+                $response->data['featured_image_url'] = $url ?: null;
+            } else {
+                $response->data['featured_image_url'] = null;
+            }
+            return $response;
+        }, 10, 2 );
+    }
+}
+add_action( 'rest_api_init', 'compunnel_expose_thumbnail_url' );
+
+/**
+ * Remove unneeded fields from REST responses (smaller payload).
+ */
+function compunnel_trim_rest_response( WP_REST_Response $response, WP_Post $post ): WP_REST_Response {
+    $remove = [ 'guid', 'comment_status', 'ping_status', 'template', 'format', 'meta', 'sticky' ];
+    foreach ( $remove as $field ) {
+        unset( $response->data[ $field ] );
+    }
+    return $response;
+}
+add_filter( 'rest_prepare_post', 'compunnel_trim_rest_response', 10, 2 );
+
+/**
+ * Enable searching by meta fields via the REST API.
+ * e.g. /wp-json/wp/v2/posts?meta_key=_featured&meta_value=1
+ */
+function compunnel_allow_meta_query( array $args, WP_REST_Request $request ): array {
+    if ( $request->get_param( 'meta_key' ) ) {
+        $args['meta_key']   = sanitize_text_field( $request->get_param( 'meta_key' ) );
+        $args['meta_value'] = sanitize_text_field( $request->get_param( 'meta_value' ) ?? '' );
+    }
+    return $args;
+}
+add_filter( 'rest_post_query',      'compunnel_allow_meta_query', 10, 2 );
+add_filter( 'rest_case_study_query','compunnel_allow_meta_query', 10, 2 );
+add_filter( 'rest_press_release_query','compunnel_allow_meta_query', 10, 2 );
+
+/* ═════════════════════════════════════════════════════════════════════════
+   SECURITY & PERFORMANCE
+   ═════════════════════════════════════════════════════════════════════════ */
+
+// Remove WP version from head
+remove_action( 'wp_head', 'wp_generator' );
+
+// Disable XML-RPC (not needed for headless)
+add_filter( 'xmlrpc_enabled', '__return_false' );
+
+// Remove oEmbed discovery links (reduces attack surface)
+remove_action( 'wp_head', 'wp_oembed_add_discovery_links' );
+remove_action( 'wp_head', 'wp_oembed_add_host_js' );
+
+// Disable REST API for unauthenticated users if not public
+// (Remove this filter if you want public REST access — default for headless)
+// add_filter( 'rest_authentication_errors', 'compunnel_restrict_rest_api' );
+
+/**
+ * Optionally restrict REST API to logged-in users for write operations.
+ */
+function compunnel_restrict_rest_write( bool $result, WP_REST_Server $server, WP_REST_Request $request ): bool {
+    $method = $request->get_method();
+    if ( in_array( $method, [ 'POST', 'PUT', 'PATCH', 'DELETE' ], true ) ) {
+        // Allow the contact endpoint publicly
+        if ( str_contains( $request->get_route(), '/compunnel/v1/contact' ) ) {
+            return $result;
+        }
+        if ( ! is_user_logged_in() ) {
+            return false;
+        }
+    }
+    return $result;
+}
+// Uncomment to enable:
+// add_filter( 'rest_pre_dispatch', 'compunnel_restrict_rest_write', 10, 3 );
+
+/**
+ * Add Cache-Control headers to public REST responses.
+ */
+function compunnel_rest_cache_headers( WP_HTTP_Response $response, WP_REST_Server $server, WP_REST_Request $request ): WP_HTTP_Response {
+    if ( 'GET' === $request->get_method() && ! is_user_logged_in() ) {
+        $response->header( 'Cache-Control', 'public, max-age=60, s-maxage=300' );
+        $response->header( 'Vary', 'Accept-Encoding, Origin' );
+    }
+    return $response;
+}
+add_filter( 'rest_post_dispatch', 'compunnel_rest_cache_headers', 10, 3 );
+
+/* ═════════════════════════════════════════════════════════════════════════
+   ADMIN TWEAKS
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Simplify the admin dashboard for a headless setup.
+ */
+function compunnel_admin_tweaks(): void {
+    // Remove widgets that aren't relevant
+    remove_meta_box( 'dashboard_quick_press',    'dashboard', 'side' );
+    remove_meta_box( 'dashboard_recent_drafts',  'dashboard', 'side' );
+    remove_meta_box( 'dashboard_primary',        'dashboard', 'side' );
+}
+add_action( 'wp_dashboard_setup', 'compunnel_admin_tweaks' );
+
+/**
+ * Add a helpful admin notice explaining the headless setup.
+ */
+function compunnel_admin_notice(): void {
+    $screen = get_current_screen();
+    if ( $screen && 'dashboard' === $screen->id ) {
+        $frontend = get_option( 'compunnel_frontend_url', 'http://localhost:3000' );
+        echo '<div class="notice notice-info is-dismissible">
+            <p><strong>Compunnel Headless Theme</strong> — Content is served to the Next.js frontend at 
+            <a href="' . esc_url( $frontend ) . '" target="_blank">' . esc_html( $frontend ) . '</a>.
+            Configure the frontend URL under <strong>Compunnel → Settings</strong>.</p>
+        </div>';
+    }
+}
+add_action( 'admin_notices', 'compunnel_admin_notice' );
+
+/**
+ * Disable the front-end theme (redirect all template requests to frontend).
+ */
+function compunnel_disable_frontend(): void {
+    if ( ! is_admin() && ! ( defined( 'REST_REQUEST' ) && REST_REQUEST ) && ! ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+        $frontend = get_option( 'compunnel_frontend_url', 'http://localhost:3000' );
+        if ( $frontend ) {
+            wp_redirect( trailingslashit( $frontend ) . ltrim( $_SERVER['REQUEST_URI'], '/' ), 301 );
+            exit;
+        }
+    }
+}
+add_action( 'template_redirect', 'compunnel_disable_frontend' );
+
+/* ═════════════════════════════════════════════════════════════════════════
+   HELPER: shared label generator (also used in custom-post-types.php)
+   ═════════════════════════════════════════════════════════════════════════ */
+if ( ! function_exists( 'compunnel_labels' ) ) {
+    function compunnel_labels( string $singular, string $plural ): array {
+        return [
+            'name'               => $plural,
+            'singular_name'      => $singular,
+            'add_new'            => "Add New {$singular}",
+            'add_new_item'       => "Add New {$singular}",
+            'edit_item'          => "Edit {$singular}",
+            'new_item'           => "New {$singular}",
+            'view_item'          => "View {$singular}",
+            'search_items'       => "Search {$plural}",
+            'not_found'          => "No {$plural} found",
+            'not_found_in_trash' => "No {$plural} found in Trash",
+            'menu_name'          => $plural,
+        ];
+    }
+}
