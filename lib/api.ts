@@ -1,7 +1,6 @@
-const API_URL = process.env.WORDPRESS_API_URL || 'https://compu81.wordpress.com/wp-json';
-
-// WordPress.com REST API v2 base
-const WP_API = `${API_URL}/wp/v2`;
+// WordPress.com REST API v1.1
+const SITE_ID = 'compu81.wordpress.com';
+const WP_COM_API = `https://public-api.wordpress.com/rest/v1.1/sites/${SITE_ID}`;
 
 // Generic fetch with error handling
 async function fetchAPI<T>(endpoint: string, fallback: T): Promise<T> {
@@ -24,50 +23,44 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, '').trim();
 }
 
-// Helper to get featured image URL from embedded data
-function getFeaturedImageUrl(post: WordPressPost): string {
-  if (post._embedded?.['wp:featuredmedia']?.[0]?.source_url) {
-    return post._embedded['wp:featuredmedia'][0].source_url;
-  }
-  return '';
-}
+// ─── WordPress.com API Types ──────────────────────────────────────────────────
 
-// ─── WordPress Standard Types ─────────────────────────────────────────────────
-
-interface WordPressPost {
-  id: number;
+interface WPComPost {
+  ID: number;
   slug: string;
-  title: { rendered: string };
-  excerpt: { rendered: string };
-  content: { rendered: string };
+  title: string;
+  excerpt: string;
+  content: string;
   date: string;
-  categories: number[];
-  _embedded?: {
-    'wp:featuredmedia'?: Array<{ source_url: string }>;
+  featured_image: string;
+  post_thumbnail?: {
+    URL: string;
+  };
+  categories: {
+    [key: string]: {
+      ID: number;
+      name: string;
+      slug: string;
+    };
   };
 }
 
-interface WordPressPage {
-  id: number;
-  slug: string;
-  title: { rendered: string };
-  content: { rendered: string };
-  _embedded?: {
-    'wp:featuredmedia'?: Array<{ source_url: string }>;
-  };
+interface WPComPostsResponse {
+  found: number;
+  posts: WPComPost[];
 }
 
-interface WordPressCategory {
-  id: number;
-  name: string;
+interface WPComPage {
+  ID: number;
   slug: string;
+  title: string;
+  content: string;
+  featured_image: string;
 }
 
-interface WordPressMedia {
-  id: number;
-  source_url: string;
-  alt_text: string;
-  title: { rendered: string };
+interface WPComPagesResponse {
+  found: number;
+  pages: WPComPage[];
 }
 
 // ─── App Types ────────────────────────────────────────────────────────────────
@@ -136,15 +129,15 @@ export interface Award {
   image_url: string;
 }
 
-// ─── Category Slugs (Create these categories in WordPress) ────────────────────
-// Go to: https://wordpress.com/posts/compu81.wordpress.com -> Categories
-// Create categories with these exact slugs:
+// ─── Category Slugs ───────────────────────────────────────────────────────────
+// Create these categories in WordPress.com:
+// Go to: https://wordpress.com/posts/compu81.wordpress.com -> click "..." -> Categories
 
 const CATEGORY_SLUGS = {
-  insights: 'insights',           // For blog posts/insights
-  pressReleases: 'press-releases', // For press releases
-  caseStudies: 'case-studies',    // For case studies/success stories
-  services: 'services',           // For service descriptions
+  insights: 'insights',
+  pressReleases: 'press-releases',
+  caseStudies: 'case-studies',
+  services: 'services',
 };
 
 // ─── Default fallback data (used when WordPress has no content) ───────────────
@@ -355,29 +348,22 @@ export const defaultInsights: Post[] = [
   },
 ];
 
-// ─── Category ID Cache ────────────────────────────────────────────────────────
+// ─── API Fetchers (WordPress.com REST API v1.1) ───────────────────────────────
 
-let categoryCache: Map<string, number> | null = null;
-
-async function getCategoryIdBySlug(slug: string): Promise<number | null> {
-  if (!categoryCache) {
-    const categories = await fetchAPI<WordPressCategory[]>(`${WP_API}/categories?per_page=100`, []);
-    categoryCache = new Map(categories.map(cat => [cat.slug, cat.id]));
-  }
-  return categoryCache.get(slug) || null;
+// Helper to check if post has a specific category
+function postHasCategory(post: WPComPost, categorySlug: string): boolean {
+  return Object.values(post.categories || {}).some(cat => cat.slug === categorySlug);
 }
 
-// ─── API Fetchers ─────────────────────────────────────────────────────────────
-
-// Hero Slides - Fetched from Pages with slug "hero-slide-1", "hero-slide-2", etc.
-// Or from a single page "hero" with content formatted as JSON in the content
+// Hero Slides - From page with slug "hero-settings" containing JSON
 export async function getHeroSlides(): Promise<HeroSlide[]> {
   try {
-    // Try to fetch from a page with slug "hero-settings"
-    const pages = await fetchAPI<WordPressPage[]>(`${WP_API}/pages?slug=hero-settings&_embed`, []);
-    if (pages.length > 0 && pages[0].content.rendered) {
-      // Parse JSON from page content (between <pre> tags or raw)
-      const content = stripHtml(pages[0].content.rendered);
+    const response = await fetchAPI<WPComPagesResponse>(
+      `${WP_COM_API}/pages/?slug=hero-settings`,
+      { found: 0, pages: [] }
+    );
+    if (response.found > 0 && response.pages[0]?.content) {
+      const content = stripHtml(response.pages[0].content);
       try {
         return JSON.parse(content);
       } catch {
@@ -390,12 +376,15 @@ export async function getHeroSlides(): Promise<HeroSlide[]> {
   return defaultHeroSlides;
 }
 
-// Stats - Fetched from a page with slug "site-stats"
+// Stats - From page with slug "site-stats" containing JSON
 export async function getSiteStats(): Promise<Stat[]> {
   try {
-    const pages = await fetchAPI<WordPressPage[]>(`${WP_API}/pages?slug=site-stats&_embed`, []);
-    if (pages.length > 0 && pages[0].content.rendered) {
-      const content = stripHtml(pages[0].content.rendered);
+    const response = await fetchAPI<WPComPagesResponse>(
+      `${WP_COM_API}/pages/?slug=site-stats`,
+      { found: 0, pages: [] }
+    );
+    if (response.found > 0 && response.pages[0]?.content) {
+      const content = stripHtml(response.pages[0].content);
       try {
         return JSON.parse(content);
       } catch {
@@ -408,12 +397,15 @@ export async function getSiteStats(): Promise<Stat[]> {
   return defaultStats;
 }
 
-// Client Logos - Fetched from a page with slug "client-logos"
+// Client Logos - From page with slug "client-logos" containing JSON
 export async function getClientLogos(): Promise<ClientLogo[]> {
   try {
-    const pages = await fetchAPI<WordPressPage[]>(`${WP_API}/pages?slug=client-logos&_embed`, []);
-    if (pages.length > 0 && pages[0].content.rendered) {
-      const content = stripHtml(pages[0].content.rendered);
+    const response = await fetchAPI<WPComPagesResponse>(
+      `${WP_COM_API}/pages/?slug=client-logos`,
+      { found: 0, pages: [] }
+    );
+    if (response.found > 0 && response.pages[0]?.content) {
+      const content = stripHtml(response.pages[0].content);
       try {
         return JSON.parse(content);
       } catch {
@@ -426,12 +418,15 @@ export async function getClientLogos(): Promise<ClientLogo[]> {
   return defaultClients;
 }
 
-// Awards - Fetched from a page with slug "awards"
+// Awards - From page with slug "awards" containing JSON
 export async function getAwards(): Promise<Award[]> {
   try {
-    const pages = await fetchAPI<WordPressPage[]>(`${WP_API}/pages?slug=awards&_embed`, []);
-    if (pages.length > 0 && pages[0].content.rendered) {
-      const content = stripHtml(pages[0].content.rendered);
+    const response = await fetchAPI<WPComPagesResponse>(
+      `${WP_COM_API}/pages/?slug=awards`,
+      { found: 0, pages: [] }
+    );
+    if (response.found > 0 && response.pages[0]?.content) {
+      const content = stripHtml(response.pages[0].content);
       try {
         return JSON.parse(content);
       } catch {
@@ -444,25 +439,22 @@ export async function getAwards(): Promise<Award[]> {
   return defaultAwards;
 }
 
-// Services - Fetched from posts in "services" category
+// Services - Posts with "services" category
 export async function getServices(): Promise<Service[]> {
   try {
-    const categoryId = await getCategoryIdBySlug(CATEGORY_SLUGS.services);
-    if (categoryId) {
-      const posts = await fetchAPI<WordPressPost[]>(
-        `${WP_API}/posts?categories=${categoryId}&per_page=10&_embed`,
-        []
-      );
-      if (posts.length > 0) {
-        return posts.map((post, index) => ({
-          id: post.id,
-          slug: post.slug,
-          title: stripHtml(post.title.rendered),
-          description: stripHtml(post.excerpt.rendered),
-          icon: index === 0 ? 'Users' : index === 1 ? 'Monitor' : 'GraduationCap',
-          bg_image: getFeaturedImageUrl(post) || defaultServices[index % defaultServices.length]?.bg_image || '',
-        }));
-      }
+    const response = await fetchAPI<WPComPostsResponse>(
+      `${WP_COM_API}/posts/?category=${CATEGORY_SLUGS.services}&number=10`,
+      { found: 0, posts: [] }
+    );
+    if (response.found > 0) {
+      return response.posts.map((post, index) => ({
+        id: post.ID,
+        slug: post.slug,
+        title: post.title,
+        description: stripHtml(post.excerpt),
+        icon: index === 0 ? 'Users' : index === 1 ? 'Monitor' : 'GraduationCap',
+        bg_image: post.featured_image || post.post_thumbnail?.URL || defaultServices[index % defaultServices.length]?.bg_image || '',
+      }));
     }
   } catch {
     // Fall through to default
@@ -470,24 +462,21 @@ export async function getServices(): Promise<Service[]> {
   return defaultServices;
 }
 
-// Case Studies - Fetched from posts in "case-studies" category
+// Case Studies - Posts with "case-studies" category
 export async function getCaseStudies(limit = 4): Promise<CaseStudy[]> {
   try {
-    const categoryId = await getCategoryIdBySlug(CATEGORY_SLUGS.caseStudies);
-    if (categoryId) {
-      const posts = await fetchAPI<WordPressPost[]>(
-        `${WP_API}/posts?categories=${categoryId}&per_page=${limit}&_embed`,
-        []
-      );
-      if (posts.length > 0) {
-        return posts.map(post => ({
-          id: post.id,
-          slug: post.slug,
-          title: post.title,
-          excerpt: post.excerpt,
-          featured_image_url: getFeaturedImageUrl(post),
-        }));
-      }
+    const response = await fetchAPI<WPComPostsResponse>(
+      `${WP_COM_API}/posts/?category=${CATEGORY_SLUGS.caseStudies}&number=${limit}`,
+      { found: 0, posts: [] }
+    );
+    if (response.found > 0) {
+      return response.posts.map(post => ({
+        id: post.ID,
+        slug: post.slug,
+        title: { rendered: post.title },
+        excerpt: { rendered: post.excerpt },
+        featured_image_url: post.featured_image || post.post_thumbnail?.URL || '',
+      }));
     }
   } catch {
     // Fall through to default
@@ -495,25 +484,22 @@ export async function getCaseStudies(limit = 4): Promise<CaseStudy[]> {
   return defaultCaseStudies.slice(0, limit);
 }
 
-// Press Releases - Fetched from posts in "press-releases" category
+// Press Releases - Posts with "press-releases" category
 export async function getPressReleases(limit = 2): Promise<PressRelease[]> {
   try {
-    const categoryId = await getCategoryIdBySlug(CATEGORY_SLUGS.pressReleases);
-    if (categoryId) {
-      const posts = await fetchAPI<WordPressPost[]>(
-        `${WP_API}/posts?categories=${categoryId}&per_page=${limit}&_embed`,
-        []
-      );
-      if (posts.length > 0) {
-        return posts.map(post => ({
-          id: post.id,
-          slug: post.slug,
-          title: post.title,
-          excerpt: post.excerpt,
-          featured_image_url: getFeaturedImageUrl(post),
-          date: post.date,
-        }));
-      }
+    const response = await fetchAPI<WPComPostsResponse>(
+      `${WP_COM_API}/posts/?category=${CATEGORY_SLUGS.pressReleases}&number=${limit}`,
+      { found: 0, posts: [] }
+    );
+    if (response.found > 0) {
+      return response.posts.map(post => ({
+        id: post.ID,
+        slug: post.slug,
+        title: { rendered: post.title },
+        excerpt: { rendered: post.excerpt },
+        featured_image_url: post.featured_image || post.post_thumbnail?.URL || '',
+        date: post.date,
+      }));
     }
   } catch {
     // Fall through to default
@@ -521,25 +507,23 @@ export async function getPressReleases(limit = 2): Promise<PressRelease[]> {
   return defaultPressReleases.slice(0, limit);
 }
 
-// Insights/Blog Posts - Fetched from posts in "insights" category (or all posts if no category)
+// Insights/Blog Posts - Posts with "insights" category
 export async function getInsights(limit = 4): Promise<Post[]> {
   try {
-    const categoryId = await getCategoryIdBySlug(CATEGORY_SLUGS.insights);
-    const endpoint = categoryId
-      ? `${WP_API}/posts?categories=${categoryId}&per_page=${limit}&_embed`
-      : `${WP_API}/posts?per_page=${limit}&_embed`;
-    
-    const posts = await fetchAPI<WordPressPost[]>(endpoint, []);
-    if (posts.length > 0) {
-      return posts.map(post => ({
-        id: post.id,
+    const response = await fetchAPI<WPComPostsResponse>(
+      `${WP_COM_API}/posts/?category=${CATEGORY_SLUGS.insights}&number=${limit}`,
+      { found: 0, posts: [] }
+    );
+    if (response.found > 0) {
+      return response.posts.map(post => ({
+        id: post.ID,
         slug: post.slug,
-        title: post.title,
-        excerpt: post.excerpt,
-        content: post.content,
+        title: { rendered: post.title },
+        excerpt: { rendered: post.excerpt },
+        content: { rendered: post.content },
         date: post.date,
-        featured_image_url: getFeaturedImageUrl(post),
-        categories: post.categories,
+        featured_image_url: post.featured_image || post.post_thumbnail?.URL || '',
+        categories: Object.values(post.categories || {}).map(cat => cat.ID),
       }));
     }
   } catch {
@@ -548,40 +532,90 @@ export async function getInsights(limit = 4): Promise<Post[]> {
   return defaultInsights.slice(0, limit);
 }
 
-// Get a specific page by slug
-export async function getPageBySlug(slug: string): Promise<Post | null> {
-  const pages = await fetchAPI<WordPressPage[]>(`${WP_API}/pages?slug=${slug}&_embed`, []);
-  if (pages.length > 0) {
-    const page = pages[0];
-    return {
-      id: page.id,
-      slug: page.slug,
-      title: page.title,
-      excerpt: { rendered: '' },
-      content: page.content,
-      date: '',
-      categories: [],
-      featured_image_url: getFeaturedImageUrl(page as unknown as WordPressPost),
-    };
+// Get all posts (for general blog listing)
+export async function getPosts(limit = 10): Promise<Post[]> {
+  try {
+    const response = await fetchAPI<WPComPostsResponse>(
+      `${WP_COM_API}/posts/?number=${limit}`,
+      { found: 0, posts: [] }
+    );
+    if (response.found > 0) {
+      return response.posts.map(post => ({
+        id: post.ID,
+        slug: post.slug,
+        title: { rendered: post.title },
+        excerpt: { rendered: post.excerpt },
+        content: { rendered: post.content },
+        date: post.date,
+        featured_image_url: post.featured_image || post.post_thumbnail?.URL || '',
+        categories: Object.values(post.categories || {}).map(cat => cat.ID),
+      }));
+    }
+  } catch {
+    // Fall through to default
+  }
+  return defaultInsights.slice(0, limit);
+}
+
+// Get single post by slug
+export async function getPostBySlug(slug: string): Promise<Post | null> {
+  try {
+    const response = await fetchAPI<WPComPostsResponse>(
+      `${WP_COM_API}/posts/?slug=${slug}`,
+      { found: 0, posts: [] }
+    );
+    if (response.found > 0) {
+      const post = response.posts[0];
+      return {
+        id: post.ID,
+        slug: post.slug,
+        title: { rendered: post.title },
+        excerpt: { rendered: post.excerpt },
+        content: { rendered: post.content },
+        date: post.date,
+        featured_image_url: post.featured_image || post.post_thumbnail?.URL || '',
+        categories: Object.values(post.categories || {}).map(cat => cat.ID),
+      };
+    }
+  } catch {
+    // Fall through to null
   }
   return null;
 }
 
-// Get a specific post by slug
-export async function getPostBySlug(slug: string): Promise<Post | null> {
-  const posts = await fetchAPI<WordPressPost[]>(`${WP_API}/posts?slug=${slug}&_embed`, []);
-  if (posts.length > 0) {
-    const post = posts[0];
-    return {
-      id: post.id,
-      slug: post.slug,
-      title: post.title,
-      excerpt: post.excerpt,
-      content: post.content,
-      date: post.date,
-      categories: post.categories,
-      featured_image_url: getFeaturedImageUrl(post),
-    };
+// Total Experience Data
+export interface TotalExperienceData {
+  heading: string;
+  description: string;
+  image_url: string;
+  cta_text: string;
+  cta_url: string;
+}
+
+export const defaultTotalExperience: TotalExperienceData = {
+  heading: 'Total Experience',
+  description: 'This is Total Experience: the power of Talent, Digital, and Learning—unified to deliver something far greater than the sum of its parts. This is how lasting impact happens. At the center of it all is Verity, our AI-powered platform driving precise decisions across Talent, Digital, and Learning—fueling smarter strategies, sharper execution, and exponential results.',
+  image_url: 'https://duvd8m7ocsflh.cloudfront.net/wp-content/uploads/2024/10/08061821/total-experience-img.webp',
+  cta_text: 'Learn More',
+  cta_url: '/about-us',
+};
+
+export async function getTotalExperience(): Promise<TotalExperienceData> {
+  try {
+    const response = await fetchAPI<WPComPagesResponse>(
+      `${WP_COM_API}/pages/?slug=total-experience`,
+      { found: 0, pages: [] }
+    );
+    if (response.found > 0 && response.pages[0]?.content) {
+      const content = stripHtml(response.pages[0].content);
+      try {
+        return JSON.parse(content);
+      } catch {
+        // Content is not valid JSON
+      }
+    }
+  } catch {
+    // Fall through to default
   }
-  return null;
+  return defaultTotalExperience;
 }
