@@ -36,7 +36,7 @@ export default function SuccessStories({ caseStudies }: SuccessStoriesProps) {
 
         {/* Cards grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {caseStudies.map((cs, i) => (
+          {caseStudies.map((cs) => (
             <Link
               key={cs.id}
               href={`/case-study/${cs.slug}`}

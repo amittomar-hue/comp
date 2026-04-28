@@ -131,10 +131,10 @@ export const defaultHeroSlides: HeroSlide[] = [
 ];
 
 export const defaultStats: Stat[] = [
-  { number: '200+', label: 'Enduring client partnerships', icon: '🤝' },
-  { number: '23%', label: 'Of Fortune enterprises trust us', icon: '🏢' },
-  { number: '100+', label: 'Successful digital transformations', icon: '🚀' },
-  { number: '1200+', label: 'Leadership workshops annually', icon: '🎓' },
+  { number: '200+', label: 'Enduring client partnerships', icon: 'handshake' },
+  { number: '23%', label: 'Of Fortune enterprises trust us', icon: 'building' },
+  { number: '100+', label: 'Successful digital transformations', icon: 'rocket' },
+  { number: '1200+', label: 'Leadership workshops annually', icon: 'graduation-cap' },
 ];
 
 export const defaultClients: ClientLogo[] = [
