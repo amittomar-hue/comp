@@ -54,7 +54,7 @@ export interface PressRelease {
 export interface HeroSlide {
   id: number; title: string; subtitle: string; cta_text?: string; cta_url?: string; bg_image: string;
 }
-export interface Stat { number: string; label: string; }
+export interface Stat { number: string; label: string; icon?: string; }
 export interface ClientLogo { name: string; logo_url: string; }
 export interface Award { id: number; title: string; description: string; image_url: string; }
 
