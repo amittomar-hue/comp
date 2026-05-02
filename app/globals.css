@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    @apply font-sans text-brand-gray-dark antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 { @apply font-semibold leading-tight; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-6 py-3 bg-brand-red text-white font-semibold rounded-md
+           hover:bg-brand-red-light transition-colors duration-200 text-sm;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-6 py-3 border-2 border-white text-white font-semibold
+           rounded-md hover:bg-white hover:text-brand-blue transition-colors duration-200 text-sm;
+  }
+  .btn-outline {
+    @apply inline-flex items-center gap-2 px-6 py-3 border-2 border-brand-blue text-brand-blue
+           font-semibold rounded-md hover:bg-brand-blue hover:text-white transition-colors duration-200 text-sm;
+  }
+  .section-padding { @apply py-16 md:py-24; }
+  .section-title {
+    @apply text-3xl md:text-4xl font-bold text-brand-blue-dark mb-4;
+  }
+  .section-subtitle {
+    @apply text-lg text-brand-gray-mid max-w-2xl mx-auto;
+  }
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200;
+  }
+  .tag {
+    @apply inline-block px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 text-brand-blue uppercase tracking-wide;
+  }
+}
+
+@layer utilities {
+  .gradient-blue {
+    background: linear-gradient(135deg, #003087 0%, #0050C8 100%);
+  }
+  .gradient-dark {
+    background: linear-gradient(135deg, #001a4d 0%, #003087 100%);
+  }
+  .text-gradient {
+    background: linear-gradient(135deg, #003087, #E31837);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
