@@ -5,7 +5,7 @@ import StatsBar from '@/components/shared/StatsBar';
 import BenefitsList from '@/components/shared/BenefitsList';
 import PageCTA from '@/components/shared/PageCTA';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, MapPin, Play } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Who We Are',
@@ -130,6 +130,70 @@ export default async function AboutPage() {
           </div>
         </section>
       )}
+
+      {/* Video Section */}
+      <section className="section-padding bg-brand-gray">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-10">
+            <span className="tag mb-3 inline-block">Our Story</span>
+            <h2 className="section-title">Watch Compunnel Create the Future</h2>
+            <p className="section-subtitle">
+              See how 30 years of enterprise trust, AI innovation, and 6,000+ global professionals
+              come together to power transformation.
+            </p>
+          </div>
+          <div className="max-w-4xl mx-auto">
+            <div className="relative rounded-2xl overflow-hidden bg-brand-blue-dark aspect-video flex items-center justify-center group cursor-pointer shadow-xl">
+              {/* Placeholder gradient — replace src with real video embed */}
+              <div className="absolute inset-0 gradient-blue opacity-80" />
+              <div className="relative z-10 flex flex-col items-center gap-4">
+                <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <Play size={32} className="text-white fill-white ml-1" />
+                </div>
+                <p className="text-white font-semibold text-lg">Compunnel — Where Tomorrow Happens</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Global Presence */}
+      <section className="section-padding bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <span className="tag mb-3 inline-block">Global Presence</span>
+            <h2 className="section-title">30+ Delivery Centers Worldwide</h2>
+            <p className="section-subtitle">
+              US-first delivery with global scale — offices and delivery centers across
+              North America, UK, and South Asia.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {[
+              { city: 'Princeton, NJ', role: 'Global HQ' },
+              { city: 'New York, NY', role: 'Enterprise Sales' },
+              { city: 'Chicago, IL', role: 'Midwest Hub' },
+              { city: 'Dallas, TX', role: 'South-Central Hub' },
+              { city: 'San Francisco, CA', role: 'West Coast' },
+              { city: 'Atlanta, GA', role: 'Southeast Hub' },
+              { city: 'Washington, DC', role: 'Federal Practice' },
+              { city: 'Toronto, Canada', role: 'Canada HQ' },
+              { city: 'London, UK', role: 'EMEA Office' },
+              { city: 'Noida, India', role: 'GCC — Development' },
+              { city: 'Hyderabad, India', role: 'GCC — Engineering' },
+              { city: 'Bangalore, India', role: 'GCC — AI/ML' },
+            ].map((loc) => (
+              <div key={loc.city} className="card p-4 flex items-start gap-3">
+                <MapPin size={16} className="text-brand-red mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-semibold text-brand-blue-dark text-sm">{loc.city}</p>
+                  <p className="text-xs text-brand-gray-mid">{loc.role}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <PageCTA
         headline="Partner with a Force for Transformation"

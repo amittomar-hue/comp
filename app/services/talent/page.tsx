@@ -7,6 +7,8 @@ import HowItWorks from '@/components/shared/HowItWorks';
 import SuccessStories from '@/components/home/SuccessStories';
 import PageCTA from '@/components/shared/PageCTA';
 import ServiceCard from '@/components/shared/ServiceCard';
+import Testimonial from '@/components/shared/Testimonial';
+import FAQSection from '@/components/shared/FAQSection';
 import { Users, Bot, Briefcase, Target, Globe, DollarSign } from 'lucide-react';
 
 export const metadata: Metadata = {
@@ -37,6 +39,25 @@ const STEPS = [
   { step: 3, title: 'Architect', description: 'Design the optimal mix of FTE, contingent, and sourced talent for your goals.' },
   { step: 4, title: 'Execute', description: 'Deploy pre-vetted, skills-matched talent with full compliance documentation.' },
   { step: 5, title: 'Optimize', description: 'Continuously improve through retention analytics, feedback loops, and re-deployment.' },
+];
+
+const TALENT_TESTIMONIAL = {
+  quote: "Compunnel's AI-driven talent platform transformed how we hire. We reduced time-to-fill by over 40% and the quality of candidates has been consistently higher than any other vendor we've worked with.",
+  name: 'Chief Information Officer',
+  title: 'Fortune 500 Financial Services Company',
+};
+
+const TALENT_FAQS = [
+  { question: 'What makes Compunnel different from traditional staffing firms?', answer: 'We combine 30+ years of workforce expertise with a proprietary AI matching engine (Eximius) that goes beyond keyword matching — evaluating skills, culture fit, and retention likelihood. This means faster placements with lower attrition.' },
+  { question: 'How quickly can you deploy contingent workers?', answer: 'We maintain a pre-vetted bench of 50,000+ professionals ready to deploy within 48–72 hours for most roles. For specialized positions, we average 5–7 business days from requisition to placement.' },
+  { question: 'Do you support Employer of Record (EOR) arrangements?', answer: 'Yes. Our EOR service covers payrolling, I-9 compliance, benefits administration, and multi-state labor law management across the US and Canada — reducing your co-employment and compliance risk.' },
+  { question: 'Which skill sets do you specialize in?', answer: 'We cover 100+ skill sets with deepest expertise in AI/ML, cloud (AWS, Azure, GCP), cybersecurity, data engineering, DevOps, full-stack development, and enterprise applications (SAP, Salesforce, ServiceNow).' },
+  { question: 'How do you ensure diversity and inclusion in hiring?', answer: 'Our AI engine includes bias-reduction algorithms that anonymize candidate scoring. As an MBE-certified company, diversity is embedded in our sourcing strategy — we actively recruit from HBCUs, women-in-tech communities, and veteran organizations.' },
+  { question: 'What is direct sourcing and why does it matter?', answer: 'Direct sourcing builds a brand-owned talent community rather than relying on third-party vendors. This reduces agency fees by 15–30%, improves candidate quality, and creates a reusable talent pool that compounds over time.' },
+  { question: 'Can you support volume hiring for large enterprise programs?', answer: 'Absolutely. We have delivered 500,000+ hires and have dedicated volume-hiring programs for clients needing 50–5,000+ placements annually, including MSP/VMS-integrated models.' },
+  { question: 'How do you measure quality of hire?', answer: 'We track first-year retention, manager satisfaction scores, time-to-productivity, and re-engagement rates. Our structured 30-60-90 day feedback loops allow us to course-correct early and continuously improve.' },
+  { question: 'Do you provide workforce analytics and reporting?', answer: 'Yes. Our client portal provides real-time dashboards covering pipeline velocity, fill rates, cost-per-hire, diversity metrics, and retention analytics — giving you full visibility into your talent program.' },
+  { question: 'What industries do you serve for talent solutions?', answer: 'We serve all major enterprise industries including Banking & Financial Services, Healthcare & Life Sciences, Insurance, Manufacturing, Government & Defense, Technology, and Energy & Utilities.' },
 ];
 
 export default async function TalentPage() {
@@ -95,10 +116,14 @@ export default async function TalentPage() {
         : caseStudies}
       />
 
+      <Testimonial testimonial={TALENT_TESTIMONIAL} variant="blue" />
+
+      <FAQSection title="Talent Solutions — Common Questions" faqs={TALENT_FAQS} />
+
       {/* Certifications */}
       <section className="section-padding bg-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="section-title mb-10">Recognition & Certifications</h2>
+          <h2 className="section-title mb-10">Recognition &amp; Certifications</h2>
           <div className="flex flex-wrap justify-center gap-6">
             {['ISO 9001:2015', 'Great Place to Work®', 'MBE Certified', 'Top 50 US Staffing (SIA)', 'Inc. 5000 × 12'].map((c) => (
               <div key={c} className="card px-6 py-4 font-semibold text-brand-blue-dark text-sm">{c}</div>

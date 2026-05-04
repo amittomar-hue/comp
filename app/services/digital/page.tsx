@@ -6,6 +6,8 @@ import HowItWorks from '@/components/shared/HowItWorks';
 import SuccessStories from '@/components/home/SuccessStories';
 import PageCTA from '@/components/shared/PageCTA';
 import ServiceCard from '@/components/shared/ServiceCard';
+import Testimonial from '@/components/shared/Testimonial';
+import FAQSection from '@/components/shared/FAQSection';
 import { Layers, BarChart2, Cloud, AppWindow, Brain, CheckSquare, Bot, DollarSign, Shield } from 'lucide-react';
 
 export const metadata: Metadata = {
@@ -40,6 +42,25 @@ const STEPS = [
   { step: 3, title: 'Build', description: 'Agile delivery with DevSecOps, continuous testing, and automated deployment.' },
   { step: 4, title: 'Optimize', description: 'Performance tuning, FinOps cost control, and continuous improvement.' },
   { step: 5, title: 'Scale', description: 'Enterprise-grade scaling from POC to production — global, compliant, resilient.' },
+];
+
+const DIGITAL_TESTIMONIAL = {
+  quote: "Compunnel's digital team modernized our entire data platform in under six months — migrating 15 years of legacy infrastructure to Azure with zero business disruption. The ROI exceeded our projections by 30%.",
+  name: 'Chief Digital Officer',
+  title: 'Fortune 500 Healthcare Enterprise',
+};
+
+const DIGITAL_FAQS = [
+  { question: 'What cloud platforms does Compunnel support?', answer: 'We are certified across all three major cloud platforms — AWS, Microsoft Azure, and Google Cloud Platform. We also support hybrid cloud and multi-cloud architectures, and have deep partnerships with Microsoft (Azure Gold Partner) and AWS.' },
+  { question: 'How do you approach legacy application modernization?', answer: 'We use a phased approach: assess, re-architect, re-platform, and optimize. Depending on your goals, we recommend the right modernization pattern — rehost, re-platform, refactor, or re-build — to maximize ROI while minimizing business disruption.' },
+  { question: 'What AI/ML capabilities do you offer?', answer: 'We build custom ML models, integrate LLMs (GPT-4, Gemini, Claude) into enterprise workflows, develop MLOps pipelines, and deliver AI-powered analytics dashboards. We also support computer vision, NLP, and GenAI use-case discovery.' },
+  { question: 'Do you implement RPA solutions and which tools do you use?', answer: 'Yes. We implement UiPath, Blue Prism, and Power Automate — from attended and unattended bots to intelligent document processing (IDP) and process mining. Our RPA CoE methodology ensures sustainable automation governance.' },
+  { question: 'What is FinOps and why does it matter?', answer: 'FinOps is a cloud financial management discipline that gives engineering, finance, and business teams shared visibility into cloud spend. We implement real-time cost dashboards, rightsizing recommendations, and chargeback models — typically reducing cloud waste by 20–40%.' },
+  { question: 'How do you ensure quality in software delivery?', answer: 'We embed quality engineering (QE) throughout the SDLC — not just at the end. This includes test automation frameworks (Selenium, Playwright, Cypress), API testing, performance testing, and AI-powered test generation via our Testgrid platform.' },
+  { question: 'Can you integrate with our existing enterprise systems?', answer: 'Yes. We have deep integration expertise across SAP, Salesforce, ServiceNow, Workday, Oracle, and Microsoft 365. We use APIs, iPaaS platforms (MuleSoft, Azure Integration Services), and custom middleware as appropriate.' },
+  { question: 'What is Guidewire and do you have certified experts?', answer: 'Guidewire is the leading cloud platform for insurance carriers (policy, billing, claims). We are a certified Guidewire implementation partner with experience across PolicyCenter, BillingCenter, ClaimCenter, and InsuranceSuite cloud migrations.' },
+  { question: 'How do you handle data governance and analytics?', answer: 'We build enterprise data platforms using Databricks, Snowflake, Azure Synapse, and AWS Redshift — with governance layers including data cataloging (Purview, Collibra), lineage tracking, and RBAC policies for GDPR/HIPAA compliance.' },
+  { question: 'What engagement models do you offer for digital projects?', answer: 'We support fixed-price projects, time-and-materials engagements, dedicated development pods, and outcome-based managed services. We right-size the model to your project stage — from POC to full-scale production deployment.' },
 ];
 
 export default async function DigitalPage() {
@@ -91,6 +112,10 @@ export default async function DigitalPage() {
       />
 
       <SuccessStories caseStudies={caseStudies} />
+
+      <Testimonial testimonial={DIGITAL_TESTIMONIAL} variant="blue" />
+
+      <FAQSection title="Digital Services — Common Questions" faqs={DIGITAL_FAQS} />
 
       <PageCTA
         headline="Modernize. Scale. Innovate Without Limits."
